@@ -1,32 +1,37 @@
 const jwt = require("jsonwebtoken");
 
+// Middleware xác thực & kiểm tra quyền
 const middlewareController = {
-    //verify token
-    verifyToken:(req, res, next) => {
-        const token = req.headers.token;
-        if (token) {
-            const accessToken = token.split(" ")[1];
-            jwt.verify(accessToken, process.env.JWT_ACCESS_KEY, (err, user) => {
-                if (err) {
-                    return res.status(403).json("Token is not valid!");
-                }
-                req.user = user;
-                next();
-            });
-        } else {
-            return res.status(401).json("You are not authenticated!");
+  authenticate: (req, res, next) => {
+    try {
+      // Lấy token từ headers
+      const token = req.headers.authorization?.split(" ")[1];
+
+      if (!token) {
+        return res.status(401).json({ message: "Bạn chưa đăng nhập!" });
+      }
+
+      jwt.verify(token, process.env.JWT_ACCESS_KEY, (err, user) => {
+        if (err) {
+          return res.status(403).json({ message: "Token không hợp lệ!" });
         }
-    },
 
-    verifytokenAndAdinAuth:(req, res, next) => {
-        middlewareController.verifyToken(req, res, () => {
-            if (req.user.id === req.params.id || req.user.admin) {
-                next();
-            } else {
-                return res.status(403).json("You are not allowed to delete this user!");
-            }
-        });
-    },
-}
+        req.user = user; // Lưu user vào request để sử dụng ở API tiếp theo
+        next();
+      });
+    } catch (error) {
+      res.status(500).json({ message: "Lỗi xác thực!", error });
+    }
+  },
 
-module.exports = middlewareController
+  authorizeRoles: (roles = []) => {
+    return (req, res, next) => {
+      if (!req.user || (roles.length && !roles.includes(req.user.role))) {
+        return res.status(403).json({ message: "Bạn không có quyền truy cập!" });
+      }
+      next();
+    };
+  }
+};
+
+module.exports = middlewareController;

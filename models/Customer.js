@@ -1,9 +1,7 @@
 const mongoose = require("mongoose");
 
-const UserSchema = new mongoose.Schema({
-  username: { type: String, required: true, unique: true },
-  password: { type: String, required: true, minlength: 6 },
-  customerID: { type: mongoose.Schema.Types.ObjectId, ref: "Customer" },
+const CustomerSchema = new mongoose.Schema({
+  customerID: { type: String, required: true, unique: true },
   name: { type: String, required: true },
   address: { type: String },
   phone: { type: String },
@@ -11,6 +9,7 @@ const UserSchema = new mongoose.Schema({
   customerType: { type: String, enum: ["regular", "vip"], default: "regular" },
   orderHistory: [{ type: mongoose.Schema.Types.ObjectId, ref: "Order" }],
   loyaltyPoints: { type: Number, default: 0 },
+  membershipTiers: { type: String, enum: ["Bronze", "Silver", "Gold"], default: "Bronze" },
 });
 
-module.exports = mongoose.model("User", UserSchema);
+module.exports = mongoose.model("Customer", CustomerSchema);
